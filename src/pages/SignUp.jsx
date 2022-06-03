@@ -7,6 +7,7 @@ import { db } from '../firebase.config'
 import OAuth from "../componenets/OAuth"
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg'
 import visibilityIcon from '../assets/svg/visibilityIcon.svg'
+import visibilityOffIcon from '../assets/svg/visibilityOffIcon.svg'
 
 const SignUp = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -86,7 +87,7 @@ const SignUp = () => {
                             value={password}
                             onChange={onChange} />
 
-                        <img src={visibilityIcon}
+                        <img src={showPassword ? visibilityIcon : visibilityOffIcon}
                             alt="show password"
                             className="showPassword"
                             onClick={() => setShowPassword((prevState) => !prevState)}
