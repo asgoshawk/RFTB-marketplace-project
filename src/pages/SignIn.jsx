@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
-import { db } from '../firebase.config'
+import OAuth from "../componenets/OAuth"
 import { ReactComponent as ArrowRightIcon } from '../assets/svg/keyboardArrowRightIcon.svg'
 import visibilityIcon from '../assets/svg/visibilityIcon.svg'
 
@@ -35,6 +35,7 @@ const SignIn = () => {
             )
 
             if (userCredential.user) {
+                toast.success('Logged in successfully.')
                 navigate('/')
             }
 
@@ -83,7 +84,7 @@ const SignIn = () => {
                     </div>
                 </form>
 
-                {/* Google OAuth */}
+                <OAuth />
 
                 <Link to='/sign-up' className="registerLink">
                     No Account? Sign Up Here!
