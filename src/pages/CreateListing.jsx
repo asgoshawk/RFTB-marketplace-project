@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from "react"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
+import { addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { db } from '../firebase.config'
+import { v4 as uuidv4 } from 'uuid'
 import { useNavigate } from "react-router-dom"
 import Spinner from "../componenets/Spinner"
+import { toast } from "react-toastify"
+
 
 const CreateListing = () => {
-    const [geolocationEnabled, setGeolocationEnabled] = useState(true)
+    const geocodingAPIKey = process.env.REACT_APP_GEOCODING_API_KEY
+    const [geolocationEnabled, setGeolocationEnabled] = useState(false)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         type: 'rent',
@@ -47,9 +54,129 @@ const CreateListing = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isMounted])
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault()
 
+        setLoading(true)
+
+        if (discountedPrice >= regularPrice) {
+            setLoading(false)
+            toast.error('Discounted price needs to be less than regular price.')
+            return
+        }
+
+        if (images.length > 6) {
+            setLoading(false)
+            toast.error('Max 6 images.')
+            return
+        }
+
+        let geolocation = {}
+        let location
+
+        if (geolocationEnabled && geocodingAPIKey !== undefined) {
+            const res = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${geocodingAPIKey}`
+            )
+            const data = await res.json()
+
+            geolocation.lat = data.result[0]?.geometry.loaction.lat ?? 0
+            geolocation.lng = data.result[0]?.geometry.loaction.lng ?? 0
+
+            location = data.status === 'ZERO_RESULTS' ?
+                undefined : data.results[0]?.formatted_address
+
+            if (location === undefined || location.includes('undefined')) {
+                setLoading(false)
+                toast.error('Please enter a correct address.')
+                return
+            }
+        } else {
+            geolocation.lat = latitude
+            geolocation.lng = longitude
+        }
+
+        // Store images in firebase
+        const storeImage = async (image) => {
+            return new Promise((resolve, reject) => {
+                const storage = getStorage()
+                const fileName = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`
+                const storageRef = ref(storage, 'images/' + fileName)
+
+                const uploadTask = uploadBytesResumable(storageRef, image)
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        // const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        // console.log('Upload is ' + progress + '% done');
+                        switch (snapshot.state) {
+                            case 'paused':
+                                // console.log('Upload is paused');
+                                break;
+                            case 'running':
+                                // console.log('Upload is running');
+                                break;
+                        }
+                    },
+                    (error) => {
+                        console.log(error);
+                        reject(error)
+                    },
+                    () => {
+                        // Handle successful uploads on complete
+                        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            })
+        }
+
+        const imageUrls = await Promise.all(
+            [...images].map((image) => storeImage(image))
+        ).catch(() => {
+            setLoading(false)
+            toast.error('Images not uploaded.')
+            return
+        })
+
+        const formDataCopy = {
+            ...formData,
+            imageUrls,
+            geolocation,
+            timestamp: serverTimestamp()
+        }
+
+        formDataCopy.location = address
+        delete formDataCopy.address
+        delete formDataCopy.images
+        !formDataCopy.offer && delete formDataCopy.discountedPrice
+
+        const docRef = await addDoc(collection(db, 'listings'), formDataCopy)
+        setLoading(false)
+        toast.success('Listing saved')
+        navigate(`/category/${formDataCopy.type}/${docRef.id}`)
+    }
+
+    const onParse = async () => {
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${address}`
+        )
+        const data = await res.json()
+        // console.log(data);
+
+        let lat = data instanceof Array ? data[0]?.lat ?? 0 : data?.lat ?? 0,
+            lng = data instanceof Array ? data[0]?.lon ?? 0 : data?.lon ?? 0
+
+        if (lat === 0 && lng === 0) {
+            toast.error('Can not parse the address please enter the coordinates manually.')
+        } else {
+            setFormData((prevState) => ({
+                ...prevState,
+                latitude: data instanceof Array ? data[0]?.lat ?? 0 : data?.lat ?? 0,
+                longitude: data instanceof Array ? data[0]?.lon ?? 0 : data?.lon ?? 0
+            }))
+        }
     }
 
     const onMutate = (e) => {
@@ -206,14 +333,23 @@ const CreateListing = () => {
                     </div>
 
                     <label className='formLabel'>Address</label>
-                    <textarea
-                        className='formInputAddress'
-                        type='text'
-                        id='address'
-                        value={address}
-                        onChange={onMutate}
-                        required
-                    />
+                    <div className="flex">
+                        <textarea
+                            className='formInputAddress'
+                            type='text'
+                            id='address'
+                            value={address}
+                            onChange={onMutate}
+                            required
+                        />
+                        <button
+                            className="formButtonActive"
+                            type="button"
+                            onClick={onParse}
+                        >
+                            Parse</button>
+
+                    </div>
 
                     {!geolocationEnabled && (
                         <div className='formLatLng flex'>
@@ -239,6 +375,7 @@ const CreateListing = () => {
                                     required
                                 />
                             </div>
+
                         </div>
                     )}
 
