@@ -32,7 +32,7 @@ const Slider = () => {
                     data: doc.data(),
                 })
             })
-            console.log(listings);
+            // console.log(listings);
             setListings(listings)
             setLoading(false)
         }
@@ -42,6 +42,10 @@ const Slider = () => {
 
     if (loading) {
         return <Spinner />
+    }
+
+    if (listings.length === 0) {
+        return (<></>)
     }
 
     return listings && (
@@ -60,6 +64,7 @@ const Slider = () => {
                             style={{
                                 width: '100%',
                                 height: '40vw',
+                                cursor: 'pointer',
                                 background: `url(${data.imageUrls[0]}) center no-repeat`,
                                 backgroundSize: 'cover',
                             }}
@@ -78,27 +83,4 @@ const Slider = () => {
 }
 
 export default Slider
-
-        //     <Swiper
-        //     modules={[Navigation, Pagination, Scrollbar, A11y]}
-        //     spaceBetween={50}
-        //     slidesPerView={1}
-        //     navigation
-        //     pagination={{ clickable: true }}>
-        //     {listing.imageUrls.map((url, index) => (
-        //         <SwiperSlide key={index}>
-        //             <div
-        //                 className="swiperSlideDiv"
-        //                 style={{
-        //                     width: '100%',
-        //                     height: '40vw',
-        //                     background: `url(${listing.imageUrls[index]}) center no-repeat`,
-        //                     backgroundSize: 'cover'
-        //                 }}
-        //             >
-
-        //             </div>
-        //         </SwiperSlide>
-        //     ))}
-        // </Swiper>
 

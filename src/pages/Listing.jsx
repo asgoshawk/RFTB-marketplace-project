@@ -60,7 +60,6 @@ const Listing = () => {
                                 backgroundSize: 'cover'
                             }}
                         >
-
                         </div>
                     </SwiperSlide>
                 ))}
