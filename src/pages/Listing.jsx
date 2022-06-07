@@ -43,27 +43,29 @@ const Listing = () => {
 
     return (
         <main>
-            <Swiper
-                modules={[Navigation, Pagination, Scrollbar, A11y]}
-                spaceBetween={50}
-                slidesPerView={1}
-                navigation
-                pagination={{ clickable: true }}>
-                {listing.imageUrls.map((url, index) => (
-                    <SwiperSlide key={index}>
-                        <div
-                            className="swiperSlideDiv"
-                            style={{
-                                width: '100%',
-                                height: '40vw',
-                                background: `url(${listing.imageUrls[index]}) center no-repeat`,
-                                backgroundSize: 'cover'
-                            }}
-                        >
-                        </div>
-                    </SwiperSlide>
-                ))}
-            </Swiper>
+            <div className="wrapSwiper">
+                <Swiper
+                    modules={[Navigation, Pagination, Scrollbar, A11y]}
+                    spaceBetween={50}
+                    slidesPerView={1}
+                    navigation
+                    pagination={{ clickable: true }}>
+                    {listing.imageUrls.map((url, index) => (
+                        <SwiperSlide key={index}>
+                            <div
+                                className="swiperSlideDiv"
+                                style={{
+                                    width: '100%',
+                                    height: '40vw',
+                                    background: `url(${listing.imageUrls[index]}) center no-repeat`,
+                                    backgroundSize: 'cover'
+                                }}
+                            >
+                            </div>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
+            </div>
 
             <div className="shareIconDiv" onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
