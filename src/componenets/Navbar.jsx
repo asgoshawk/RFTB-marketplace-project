@@ -15,7 +15,7 @@ const Navbar = () => {
 
     return (
         <footer className="navbar">
-            <nav className="navbarBrand">House Marketplace</nav>
+            <nav className="navbarBrand" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>House Marketplace</nav>
             <nav className="navbarNav">
                 <ul className="navbarListItems">
                     <li className="navbarListItem" onClick={() => navigate('/')}>
