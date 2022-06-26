@@ -57,7 +57,7 @@ const Profile = () => {
   }, [auth.currentUser.uid]);
 
   const onLogout = () => {
-    // navigate("/", { replace: true });
+    navigate("/", { replace: true });
     auth.signOut();
     toast.success("Logged out successfully.");
   };
